@@ -35,6 +35,7 @@ namespace WebApi.template
         {
             services.AddMvc();
             BuildSwaggerService(services);
+            AddVersioning(services);
 
             ApplicationContainer = BuildAutofac(services);
             services.AddMvc(options => options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.StringOutputFormatter>());
@@ -95,6 +96,15 @@ namespace WebApi.template
             builder.Populate(services);
 
             return builder.Build();
+        }
+
+        private static void AddVersioning(IServiceCollection services)
+        {
+            // https://github.com/Microsoft/aspnet-api-versioning/wiki/Versioning-via-the-URL-Path
+
+            if (services == null) throw new ArgumentNullException(nameof(services));
+
+            services.AddApiVersioning();
         }
     }
 }

@@ -1,0 +1,179 @@
+﻿@inherits Microsoft.VisualStudio.Web.CodeGeneration.Templating.RazorTemplateBase
+using System;
+using System.Net;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using WebApi.template.Models;
+
+
+@{
+    string modelName = (Model.ClassName.EndsWith("Controller") ? Model.ClassName.Substring(0, Model.ClassName.Length - 10) : Model.ClassName);
+    string sampleDtoName = modelName + "Dto";
+}
+namespace @Model.NamespaceName
+{
+@{
+    string routePrefix = "api/" + modelName;
+}
+    [Produces("application/json")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    public class @Model.ClassName : Controller
+    {
+        // GET: api/@modelName
+        /// <summary>
+        /// returns a collection of @modelName
+        /// </summary>
+        /// <response code="200">collection of @modelName</response>
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var results = MockData();
+            return Ok(results);
+        }
+
+        // GET: api/@modelName/5
+        /// <summary>
+        /// returns a specific @modelName with the specified id
+        /// </summary>
+        /// <param name="id">id of @modelName to return</param>
+        /// <returns>a single @modelName</returns>
+        /// <response code="200">@modelName found - body contains data</response>
+        /// <response code="404">@modelName does not exist</response>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            var result = MockData().FirstOrDefault(x => x.Id == id);
+
+            if (result == null)
+            return NotFound();
+
+            return Ok(result);
+        }
+    
+        // POST: api/@modelName
+        /// <summary>
+        /// adds a @modelName type to the system
+        /// </summary>
+        /// <param name="value">new @modelName DTO to add</param>
+        /// <response code="201">@modelName created</response>
+        /// <response code="400">Request is not valid</response>
+        [ProducesResponseType((int)HttpStatusCode.Created, Type = typeof(Uri))]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest, Type = typeof(void))]
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody]@sampleDtoName dto)
+        {
+            if (dto == null) return BadRequest(); 
+
+            // add fluent validation
+
+            var id = new Random().Next(100, 1000);
+
+            return Created($"/api/@modelName/{id}", id);
+        }
+
+        // PUT: api/@modelName/5
+        /// <summary>
+        /// modifies the existing @modelName
+        /// </summary>
+        /// <param name="id">id of @modelName</param>
+        /// <param name="value">DTO of @modelName to change</param>
+        /// <returns></returns>
+        /// <response code="204">resource modified</response>
+        /// <response code="403">not allowed to modify the resource</response>
+        /// <response code="404">resource does not exist</response>
+        [ProducesResponseType((int)HttpStatusCode.Forbidden, Type = typeof(string))]
+        [ProducesResponseType((int)HttpStatusCode.NoContent, Type = typeof(string))]
+        [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(string))]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody]@sampleDtoName dto)
+        {
+
+            if (dto == null) return BadRequest();
+
+            var record = MockData().FirstOrDefault(x => x.Id == id);
+            if (record == null)
+            return NotFound();
+
+            // add fluent validation
+            //if (not a valid object)
+            //    return BadRequest();
+
+            return Accepted();
+        }
+
+        // DELETE: api/@modelName/5
+        /// <summary>
+        /// removes a @modelName from the system
+        /// </summary>
+        /// <param name="id">id of @modelName to remove</param>
+        /// <response code="204">@modelName removed</response>
+        /// <response code="403">not allowed to remove @modelName</response>
+        /// <response code="404">@modelName does not exist</response>
+        [ProducesResponseType((int)HttpStatusCode.Forbidden, Type = typeof(string))]
+        [ProducesResponseType((int)HttpStatusCode.NoContent, Type = typeof(void))]
+        [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(string))]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            //if (forbidden) return Forbid();
+
+            var record = MockData().FirstOrDefault(x => x.Id == id);
+            if (record == null)
+            return NotFound();
+            
+            return Ok();
+        }
+    
+        // HATEOAS link generation, your Dto must extend BaseDto to inherit the AddLinks method
+
+        private Link[] CreateLinks(@sampleDtoName dto)
+        {
+            var links = new Link[]
+            {
+                new Link
+                {
+                    Method = "GET",
+                    Rel = "self",
+                    Href = Url.Action("Get", "@modelName", new { Id = dto.Id})
+                },
+                //new Link
+                //{
+                    //    Method = "GET",
+                    //    Rel = "someOtherObject",
+                    //    Href = Url.Link("VersionedApi", new { Controller = "SomeOtherObject",  Id = x.someOtherObjectId })
+                //}
+            };
+            return links;
+}
+    
+    
+        // A sample classes and Mock data for templating, can be removed
+
+        public class @sampleDtoName : BaseDto // must extend BaseDto
+        {
+            public int Id { get; set; }
+            public string Description { get; set; }
+        }
+
+        private IQueryable<@sampleDtoName> MockData()
+        {
+            var data = new[]
+            {
+                new @sampleDtoName{ Id = 1, Description = "First"},
+                new @sampleDtoName{ Id = 2, Description = "Second"}
+            };
+
+
+            foreach (var x in data)
+            {
+                x.AddLinks(CreateLinks(x));
+            }
+
+            return data.AsQueryable();
+        }
+
+}
+}
