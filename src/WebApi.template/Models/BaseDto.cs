@@ -5,6 +5,7 @@ namespace WebApi.template.Models
 {
     public abstract class BaseDto
     {
+        public int Id { get; set; }
         private readonly List<Link> _links = new List<Link>();
 
         [JsonProperty(Order = 100)]

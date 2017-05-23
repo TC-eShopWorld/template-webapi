@@ -17,9 +17,12 @@ namespace @Model.NamespaceName
 @{
     string routePrefix = "api/" + modelName;
 }
+    /// <summary>
+    /// @modelName controller
+    ///</summary>
     [Produces("application/json")]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [System.Web.Http.Route("api/v{version:apiVersion}/@modelName")]
     public class @Model.ClassName : Controller
     {
         // GET: api/@modelName
@@ -28,10 +31,10 @@ namespace @Model.NamespaceName
         /// </summary>
         /// <response code="200">collection of @modelName</response>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IEnumerable<BaseDto>> Get()
         {
             var results = MockData();
-            return Ok(results);
+            return results;
         }
 
         // GET: api/@modelName/5
@@ -42,15 +45,12 @@ namespace @Model.NamespaceName
         /// <returns>a single @modelName</returns>
         /// <response code="200">@modelName found - body contains data</response>
         /// <response code="404">@modelName does not exist</response>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        [HttpGet]
+        public async Task<BaseDto> Get(int id)
         {
             var result = MockData().FirstOrDefault(x => x.Id == id);
-
-            if (result == null)
-            return NotFound();
-
-            return Ok(result);
+            
+            return result;
         }
     
         // POST: api/@modelName
@@ -63,15 +63,13 @@ namespace @Model.NamespaceName
         [ProducesResponseType((int)HttpStatusCode.Created, Type = typeof(Uri))]
         [ProducesResponseType((int)HttpStatusCode.BadRequest, Type = typeof(void))]
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]@sampleDtoName dto)
+        public async Task<CreatedResult> Post([FromBody]BaseDto dto)
         {
-            if (dto == null) return BadRequest(); 
-
             // add fluent validation
 
             var id = new Random().Next(100, 1000);
 
-            return Created($"/api/@modelName/{id}", id);
+            return Created($"/api/Packages/{id}", id);
         }
 
         // PUT: api/@modelName/5
@@ -87,21 +85,21 @@ namespace @Model.NamespaceName
         [ProducesResponseType((int)HttpStatusCode.Forbidden, Type = typeof(string))]
         [ProducesResponseType((int)HttpStatusCode.NoContent, Type = typeof(string))]
         [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(string))]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody]@sampleDtoName dto)
+        [HttpPut]
+        public async Task<BaseDto> Put(int id, [FromBody]BaseDto dto)
         {
 
-            if (dto == null) return BadRequest();
+            if (dto == null) throw new Exception("Empty data");
 
             var record = MockData().FirstOrDefault(x => x.Id == id);
             if (record == null)
-            return NotFound();
+            throw new Exception("Record not found");
 
             // add fluent validation
             //if (not a valid object)
-            //    return BadRequest();
+            //    throw validation exception
 
-            return Accepted();
+            return record;
         }
 
         // DELETE: api/@modelName/5
@@ -115,43 +113,45 @@ namespace @Model.NamespaceName
         [ProducesResponseType((int)HttpStatusCode.Forbidden, Type = typeof(string))]
         [ProducesResponseType((int)HttpStatusCode.NoContent, Type = typeof(void))]
         [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(string))]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete]
+        public async Task<bool> Delete(int id)
         {
             //if (forbidden) return Forbid();
 
             var record = MockData().FirstOrDefault(x => x.Id == id);
             if (record == null)
-            return NotFound();
-            
-            return Ok();
+            throw new Exception("Record not found");
+
+            return true;
         }
     
         // HATEOAS link generation, your Dto must extend BaseDto to inherit the AddLinks method
 
-        private Link[] CreateLinks(@sampleDtoName dto)
+        private Link[] CreateLinks(BaseDto dto)
         {
             var links = new Link[]
             {
                 new Link
-                {
-                    Method = "GET",
-                    Rel = "self",
-                    Href = Url.Action("Get", "@modelName", new { Id = dto.Id})
-                },
+            {
+                Method = "GET",
+                Rel = "self",
+                Href = "/api/v1.0/@modelName/" + dto.Id
+            },
                 //new Link
                 //{
-                    //    Method = "GET",
-                    //    Rel = "someOtherObject",
-                    //    Href = Url.Link("VersionedApi", new { Controller = "SomeOtherObject",  Id = x.someOtherObjectId })
+                //    Method = "GET",
+                //    Rel = "someOtherObject",
+                //    Href = Url.Link("VersionedApi", new { Controller = "SomeOtherObject",  Id = x.someOtherObjectId })
                 //}
             };
             return links;
-}
+        }
     
     
-        // A sample classes and Mock data for templating, can be removed
-
+        
+        /// <summary>
+        /// A sample classes and Mock data for templating, can be removed or moved to Models folder
+        /// </summary>
         public class @sampleDtoName : BaseDto // must extend BaseDto
         {
             public int Id { get; set; }
@@ -175,5 +175,5 @@ namespace @Model.NamespaceName
             return data.AsQueryable();
         }
 
-}
+    }
 }
