@@ -22,7 +22,7 @@ namespace @Model.NamespaceName
     ///</summary>
     [Produces("application/json")]
     [ApiVersion("1.0")]
-    [System.Web.Http.Route("api/v{version:apiVersion}/@modelName")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class @Model.ClassName : Controller
     {
         // GET: api/@modelName
@@ -45,7 +45,7 @@ namespace @Model.NamespaceName
         /// <returns>a single @modelName</returns>
         /// <response code="200">@modelName found - body contains data</response>
         /// <response code="404">@modelName does not exist</response>
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<BaseDto> Get(int id)
         {
             var result = MockData().FirstOrDefault(x => x.Id == id);
